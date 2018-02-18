@@ -9,6 +9,15 @@ ZFS Dataset Layout
 Note: For SSD pools, add `-O atime=off` to the above command to reduce number of writes; may confuse progams like mail clients in some cases.
 
 
+### SWAP setup (optional)
+
+#### Create a base dataset to hold swap zvols
+    zfs create  -o logbias=throughput -o sync=always -o primarycache=metadata rpool/SWAP
+
+#### Create a 2GB zvol to use for swap
+    zfs create -V 2G -b $(getconf PAGESIZE) -o logbias=throughput -o sync=always -o primarycache=metadata rpool/SWAP/swap0
+
+
 ### ROOT Base Dataset
 
 #### Create the base dataset for boot environments:
