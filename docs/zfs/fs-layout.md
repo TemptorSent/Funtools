@@ -9,7 +9,7 @@ ZFS Dataset Layout
 Note: For SSD pools, add `-O atime=off` to the above command to reduce number of writes; may confuse progams like mail clients in some cases.
 
 
-### SWAP setup (optional)
+### SWAP Dataset (optional)
 
 #### Create a base dataset to hold swap zvols
     zfs create  -o logbias=throughput -o sync=always -o primarycache=metadata rpool/SWAP
@@ -18,7 +18,7 @@ Note: For SSD pools, add `-O atime=off` to the above command to reduce number of
     zfs create -V 2G -b $(getconf PAGESIZE) -o logbias=throughput -o sync=always -o primarycache=metadata rpool/SWAP/swap0
 
 
-### ROOT Base Dataset
+### ROOT Dataset
 
 #### Create the base dataset for boot environments:
     zfs create -o mountpoint=none -o canmount=off -o compression=lz4 rpool/ROOT
@@ -35,10 +35,10 @@ Note: For SSD pools, add `-O atime=off` to the above command to reduce number of
     zfs create rpool/ROOT/funtoo/opt
     zfs create rpool/ROOT/funtoo/srv
 
-### TMP Base Dataset
+### TMP Dataset
 
 #### Create a base dataset for temporary directories:
-zfs create -o compression=lz4 -o mountpoint=/ -o canmount=off rpool/TMP
+    zfs create -o compression=lz4 -o mountpoint=/ -o canmount=off rpool/TMP
 
 #### Create unmnountable datasets rpol/TMP/var for parent directory of /var/tmp:
     zfs create -o canmount=off rpool/TMP/var
@@ -49,7 +49,7 @@ zfs create -o compression=lz4 -o mountpoint=/ -o canmount=off rpool/TMP
     zfs create -o canmount=on -o sync=disabled rpool/TMP/var/tmp/portage
 
 
-### HOME Base Dataset
+### HOME Dataset
 
 #### Create a base dataset for users home directories:
     zfs create -o compression=lz4 -o mountpoint=/ -o canmount=off rpool/HOME
@@ -61,10 +61,10 @@ zfs create -o compression=lz4 -o mountpoint=/ -o canmount=off rpool/TMP
     zfs create -o canmount=on rpool/HOME/root
 
 
-### FUNTOO Base Dataset
+### FUNTOO Dataset
 
 #### Create a base dataset for Funtoo specific stuff:
-zfs create -o compression=lz4 -o mountpoint=/ -o canmount=off rpool/FUNTOO
+    zfs create -o compression=lz4 -o mountpoint=/ -o canmount=off rpool/FUNTOO
 
 #### Create unmnountable datasets for parent directories of our desired leaf nodes:
     zfs create -o canmount=off rpool/FUNTOO/var
