@@ -4,7 +4,7 @@ ZFS Dataset Layout
 ### Pool setup
 
 #### Create the pool:
-    zpool create -f -o ashift=12 -o cachefile=/tmp/zpool.cache -O normalization=formD  -m none -R /mnt/funtoo rpool raidz2 /dev/disk/by-id/... /dev/disk/by-id/... .....`
+    zpool create -f -o ashift=12 -o cachefile=/tmp/zpool.cache -O normalization=formD  -m none -R /mnt/funtoo rpool raidz2 /dev/disk/by-id/... /dev/disk/by-id/... .....
     
 Note: For SSD pools, add `-O atime=off` to the above command to reduce number of writes; may confuse progams like mail clients in some cases.
 
@@ -24,13 +24,16 @@ Note: For SSD pools, add `-O atime=off` to the above command to reduce number of
     zfs create -o mountpoint=none -o canmount=off -o compression=lz4 rpool/ROOT
 
 #### Create your initial system boot environment root:
-    zfs create -o mountpoint=/ canmount=on rpool/ROOT/
+    zfs create -o mountpoint=/ canmount=on rpool/ROOT/funtoo
+
+#### Set your system root as the bootfs for the pool
+    zpool set bootfs=rpool/ROOT/funtoo
 
 #### Create your system filesystem hierarchy:
-    zfs create -p rpool/ROOT/funtoo/var/git
+    zfs create rpool/ROOT/funtoo/var
+    zfs create rpool/ROOT/funtoo/var/git
     zfs create rpool/ROOT/funtoo/opt
     zfs create rpool/ROOT/funtoo/srv
-    zfs create rpool/ROOT/funtoo/opt
 
 ### TMP Base Dataset
 
