@@ -35,8 +35,14 @@ Note: Replace 'generic_64' in the URL with your subarch, see https://www.funtoo.
 
 ### Finishing up
 
+#### Unbind /dev, /proc, and /sys from target root:
+	umount -lR {dev,proc,sys}
+	
 #### Disable Swap (required if enabled):
 	swapoff -a
-
-#### Export pool:
+	
+#### Change out of the target root directory so it's not busy when we try to export:
+	cd /
+	
+#### Export the pool:
 	zpool export rpool
