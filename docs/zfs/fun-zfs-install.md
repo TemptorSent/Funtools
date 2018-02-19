@@ -2,7 +2,7 @@ Installation of Funtoo on ZFS
 =============================
 
 
-### Preparation
+## Preparation
 Note: This assumes your root pool is mounted with it's altroot set to /mnt/funtoo
 
 #### Enable Swap (optional):
@@ -24,16 +24,103 @@ Note: Replace 'generic_64' in the URL with your subarch, see https://www.funtoo.
 	mount --rbind /dev dev
 
 #### Copy zpool cache to /etc/zfs under the target root:
-	mkdir -p /mnt/funtoo/etc/zfs
-	cp /tmp/zpool.cache ./etc/zfs/zpool.cache
+	mkdir -p etc/zfs
+	cp /tmp/zpool.cache etc/zfs/zpool.cache
 
 #### Copy resolve.conf to /etc under the target root:
-	cp /etc/resolv.conf ./etc/
+	cp /etc/resolv.conf etc/
 	
-### chroot Enviornment
+	
+## chroot Enviornment
+
+### chroot
+
+#### Enter the chroot environment:
+	chroot /mnt/funtoo /bin/bash
+
+#### Set a prompt to remind us we're in the chroot:
+	export PS1="(chroot) $PS1"
+
+#### Change PWD to root's home directory (/root):
+	cd
+	
+### /etc/fstab
+
+#### Empty out /etc/fstab:
+	sed -i '1 q' /etc/fstab
+	echo -e '# <Device>\t<Mountpoint>\t<Type>\t<Mount Options>\t<Dump/Pass>' >> /etc/fstab
+
+#### Add swap entry for rpool/SWAP/swap0 if it was (optionally) created previously:
+	echo -e '/dev/zvol/rpool/SWAP/swap0\tnone\tswap\tsw\t0 0' >> /etc/fstab
+
+### BUG: fix needed upstream, ego refuses to checkout to existing empty /var/git/meta-repo
+#### Sync and update portage tree (with workaround for first `ego sync`):
+	zfs rename rpool/FUNTOO/meta-repo rpool/FUNTOO/meta-repox
+	ego sync
+	(cd /var/git/meta-repo && rsync -aAX . /var/git/meta-repox)
+	rm -r meta-repo
+	zfs rename rpool/FUNTOO/meta-repox rpool/FUNTOO/meta-repo
+	env-update
+	. /etc/profile
+
+### /etc/portage
+
+#### Create directories for package.* instead of using monolithic files:
+	mkdir /etc/portage/package.{accept_keywords,accept_restrict,env,keywords,license,mask,propertiesl,unmask,use}
 
 
-### Finishing up
+### BUG: debian-sources has no way of preventing it from overwriting the /usr/src/linux symlink if you have a custom kernel installed -- this WILL break your system if you're not careful!
+#### Install kernel sources:
+	echo -e "# Required by debian-sources\napp-arch/xz-utils\tapi_x86_32" >> /etc/portage/package.use/xz-utils
+	emerge -1v sys-kernel/debian-sources
+
+#### Install ZFS components:
+	emerge -v sys-kernel/spl sys-fs/zfs sys-fs/zfs-kmod
+	
+#### Start zfs-import and zfs-mount at boot:
+	rc-update add zfs-import boot
+	rc-update add zfs-mount boot
+
+#### Start zfs-zed and zfs-share in the default runlevel:
+	rc-update add zfs-zed default
+	rc-update add zfs-share default
+
+### NOTE: genkernel is broken, investigate dracut.
+
+### grub
+#### Install grub using libzfs:
+	echo -e "# Require for booting from ZFS\nsys-boot/grub:2\tlibzfs" >> /etc/portage/package.use/grub
+	emerge sys-boot/grub:2
+#### Create /etc/mtab and make sure grub understands zfs
+	touch /etc/mtab
+	[ "$(grub-probe /)" = "zfs" ] || echo "Grub could not detect zfs filesystem at '/'!"
+
+#### Install the bootloader to all drives in the array:
+Note: Replace `/dev/disk/by-id/...` with wildcard match or list of devices for your pool.
+
+	for drive in /dev/disk/by-id/... ; do
+		sgdisk -a1 -n2:48:2047 -t2:EF02 -c2:"BIOS boot partition" $drive
+		partx -u $drive
+		grub-install $drive
+	done
+
+#### NOTE: Need configuration for grub with dracut initfs.
+
+### Configure the system
+
+#### Install logger:
+	emerge app-admin/metalog
+	rc-update add metalog default
+
+#### Set root's password:
+	passwd
+	
+### Leave the chroot
+#### Exit the chrooted shell:
+	exit
+
+
+## Finishing up
 
 #### Unbind /dev, /proc, and /sys from target root:
 	umount -lR {dev,proc,sys}
