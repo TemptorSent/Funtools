@@ -4,9 +4,10 @@ ZFS Dataset Layout
 ### Pool setup
 
 #### Create the pool:
-	zpool create -f -o ashift=12 -o cachefile=/tmp/zpool.cache -O normalization=formD  -m none -R /mnt/funtoo rpool raidz2 /dev/disk/by-id/... /dev/disk/by-id/... .....
+	zpool create -f -o ashift=12 -o cachefile=/tmp/zpool.cache -O atime=on -O relatime=on -O normalization=formD -O xattr=sa -m none -R /mnt/funtoo rpool raidz2 /dev/disk/by-id/... /dev/disk/by-id/... .....
     
-Note: For SSD pools, add `-O atime=off` to the above command to reduce number of writes; may confuse progams like mail clients in some cases.
+Note: For SSD pools, consider using `-O atime=off` instead to further reduce number of writes; may confuse progams like mail clients in some cases. 
+Note: See https://github.com/zfsonlinux/zfs/issues/443 for details on xattr=sa.
 
 
 ### SWAP Dataset (optional)
@@ -14,7 +15,7 @@ Note: For SSD pools, add `-O atime=off` to the above command to reduce number of
 #### Create a base dataset to hold swap zvols
 Note: See https://forum.proxmox.com/threads/proxmox-5-change-from-zfs-rpool-swap-to-standard-linux-swap-partition.36376/.
 
-	zfs create -o primarycache=metadata -o secondarycache=metadata -o compression=zle -o checksum=off -o sync=always -o logbias=throughput rpool/SWAP
+	zfs create -o primarycache=metadata -o secondarycache=metadata -o compression=zle -o sync=always -o logbias=throughput rpool/SWAP
 
 #### Create a 4GB zvol to use for swap
 	zfs create -V 4G -b $(getconf PAGESIZE) rpool/SWAP/swap0
@@ -36,6 +37,28 @@ Note: See https://forum.proxmox.com/threads/proxmox-5-change-from-zfs-rpool-swap
 	zfs create rpool/ROOT/funtoo/var/git
 	zfs create rpool/ROOT/funtoo/opt
 	zfs create rpool/ROOT/funtoo/srv
+
+
+### BOOT Dataset
+
+#### Create the base dataset for files under /boot:
+	zfs create -o compression=off -o mountpoint=/ -o canmount=off -o sync=always rpool/BOOT
+
+#### Create datasets for common /boot:
+	zfs create -o canmount=on rpool/BOOT/boot
+
+#### Create dataset for grub at /boot/grub:
+	zfs create rpool/BOOT/boot/grub
+
+
+### ROOT Dataset (After /boot creation)
+
+#### Create an unmountable dataset at /boot in the boot environment:
+	zfs create -o canmount=off -o sync=always rpool/ROOT/funtoo/boot
+	
+#### Create dataset mounted at /boot/active for boot-environment specific boot files:
+	zfs create -o canmount=on rpool/ROOT/funtoo/boot/active
+
 
 ### TMP Dataset
 
