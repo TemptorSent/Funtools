@@ -3,7 +3,7 @@ Because you love your data. ZFS checksums your data and metadata from top to bot
 
 
 ## What is ZFS?
-ZFS is a complete storage stack, from raw stoarge devices to hierarchical filesystem mangement.
+ZFS is a complete storage stack, from raw storage devices to hierarchical filesystem mangement.
 
 #### What tools do I need to learn?
 You need only two tools to setup and administer ZFS in most cases: `zpool`and `zfs`
