@@ -66,7 +66,7 @@ Note: Replace 'generic_64' in the URL with your subarch, see https://www.funtoo.
 ### /etc/portage
 
 #### Create directories for package.* instead of using monolithic files:
-	mkdir /etc/portage/package.{accept_keywords,accept_restrict,env,keywords,license,mask,propertiesl,unmask,use}
+	mkdir /etc/portage/package.{accept_keywords,accept_restrict,env,keywords,license,mask,properties,unmask,use}
 
 
 ### BUG: debian-sources has no way of preventing it from overwriting the /usr/src/linux symlink if you have a custom kernel installed -- this WILL break your system if you're not careful!
