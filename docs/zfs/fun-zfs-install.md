@@ -53,15 +53,22 @@ Note: Replace 'generic_64' in the URL with your subarch, see https://www.funtoo.
 #### Add swap entry for rpool/SWAP/swap0 if it was (optionally) created previously:
 	echo -e '/dev/zvol/rpool/SWAP/swap0\tnone\tswap\tsw\t0 0' >> /etc/fstab
 
-### BUG: fix needed upstream, ego refuses to checkout to existing empty /var/git/meta-repo
-#### Sync and update portage tree (with workaround for first `ego sync`):
-	zfs rename rpool/FUNTOO/meta-repo rpool/FUNTOO/meta-repox
+#### Sync and update portage tree:
 	ego sync
-	(cd /var/git/meta-repo && rsync -aAX . /var/git/meta-repox)
-	rm -r meta-repo
-	zfs rename rpool/FUNTOO/meta-repox rpool/FUNTOO/meta-repo
 	env-update
 	. /etc/profile
+	
+Note: bug fix was needed upstream, because ego refused to checkout to existing empty /var/git/meta-repo; if above fails, use the following workaround for first `ego sync` and file a bug upstream:
+
+		# Workaround for ego sync refusing to sync to empty directory
+		# This should no longer be needed.
+		zfs rename rpool/FUNTOO/meta-repo rpool/FUNTOO/meta-repox
+		ego sync
+		(cd /var/git/meta-repo && rsync -aAX . /var/git/meta-repox)
+		rm -r meta-repo
+		zfs rename rpool/FUNTOO/meta-repox rpool/FUNTOO/meta-repo
+
+
 
 ### /etc/portage
 
