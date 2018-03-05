@@ -3,8 +3,18 @@ ZFS Dataset Layout
 
 ### Pool setup
 
+#### Define a variable with the pool device layout in the form of one of the following:
+	ZVDEVS_rpool="mirror /dev/disk/by-id/... /dev/disk/by-id/..."
+	ZVDEVS_rpool="mirror /dev/disk/by-id/... /dev/disk/by-id/... mirror /dev/disk/by-id/... /dev/disk/by-id/..."
+	ZVDEVS_rpool="raidz1 /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/..."
+	ZVDEVS_rpool="raidz2 /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/..."
+	ZVDEVS_rpool="raidz3 /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/..."
+	ZVDEVS_rpool="raidz1 /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/... raidz1 /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/..."
+
+
 #### Create the pool:
-	zpool create -f -o ashift=12 -o cachefile=/tmp/zpool.cache -O atime=on -O relatime=on -O normalization=formD -O xattr=sa -m none -R /mnt/funtoo rpool raidz2 /dev/disk/by-id/... /dev/disk/by-id/... .....
+	zpool create -f -o ashift=12 -o cachefile=/tmp/zpool.cache -O compression=lz4 -O atime=on -O relatime=on -O normalization=formD -O xattr=sa -m none -R /mnt/funtoo rpool ${ZVDEVS_rpool}
+
     
 Note: For SSD pools, consider using `-O atime=off` instead to further reduce number of writes; may confuse progams like mail clients in some cases. 
 Note: See https://github.com/zfsonlinux/zfs/issues/443 for details on xattr=sa.
