@@ -84,15 +84,13 @@ Note: bug fix was needed upstream, because ego refused to checkout to existing e
 #### Install ZFS components:
 	emerge -v sys-kernel/spl sys-fs/zfs sys-fs/zfs-kmod
 	
-#### Start zfs-import and zfs-mount at boot:
-	rc-update add zfs-import boot
-	rc-update add zfs-mount boot
+#### Start zfs-import and zfs-mount early in boot process:
+	rc-update add zfs-import sysinit
+	rc-update add zfs-mount sysinit
 
 #### Start zfs-zed and zfs-share in the default runlevel:
 	rc-update add zfs-zed default
 	rc-update add zfs-share default
-
-### NOTE: genkernel is broken, investigate dracut.
 
 ### grub
 #### Install grub using libzfs:
@@ -111,7 +109,15 @@ Note: Replace `/dev/disk/by-id/...` with wildcard match or list of devices for y
 		grub-install $drive
 	done
 
-#### NOTE: Need configuration for grub with dracut initfs.
+### Install `dracut` and build initramfs:
+Note: Mount `/boot` if it's not mounted for some reason...
+	emerge sys-kernel/dracut
+	(cd /boot & dracut --force)
+
+### Configure the bootloader entries:
+Note: Need simple example bootloader config for grub here.
+Note: dracut use the format `root=zfs:pool/path/TO/rootfs` to specify the root filesystem.
+
 
 ### Configure the system
 
