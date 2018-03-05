@@ -34,7 +34,7 @@ Note: See https://forum.proxmox.com/threads/proxmox-5-change-from-zfs-rpool-swap
 ### ROOT Dataset
 
 #### Create the base dataset for boot environments:
-	zfs create -o mountpoint=none -o canmount=off -o compression=lz4 rpool/ROOT
+	zfs create -o mountpoint=none -o canmount=off rpool/ROOT
 
 #### Create your initial system boot environment root:
 	zfs create -o mountpoint=/ canmount=on rpool/ROOT/funtoo
@@ -73,7 +73,7 @@ Note: See https://forum.proxmox.com/threads/proxmox-5-change-from-zfs-rpool-swap
 ### TMP Dataset
 
 #### Create a base dataset for temporary directories:
-	zfs create -o compression=lz4 -o mountpoint=/ -o canmount=off rpool/TMP
+	zfs create -o mountpoint=/ -o canmount=off rpool/TMP
 
 #### Create unmnountable datasets rpol/TMP/var for parent directory of /var/tmp:
 	zfs create -o canmount=off rpool/TMP/var
@@ -87,7 +87,7 @@ Note: See https://forum.proxmox.com/threads/proxmox-5-change-from-zfs-rpool-swap
 ### HOME Dataset
 
 #### Create a base dataset for users home directories:
-	zfs create -o compression=lz4 -o mountpoint=/ -o canmount=off rpool/HOME
+	zfs create -o mountpoint=/ -o canmount=off rpool/HOME
 
 #### Create the /home directory root:
 	zfs create -o canmount=on rpool/HOME/home
@@ -99,7 +99,7 @@ Note: See https://forum.proxmox.com/threads/proxmox-5-change-from-zfs-rpool-swap
 ### FUNTOO Dataset
 
 #### Create a base dataset for Funtoo specific stuff:
-	zfs create -o compression=lz4 -o mountpoint=/ -o canmount=off rpool/FUNTOO
+	zfs create -o mountpoint=/ -o canmount=off rpool/FUNTOO
 
 #### Create unmnountable datasets for parent directories of our desired leaf nodes:
 	zfs create -o canmount=off rpool/FUNTOO/var
