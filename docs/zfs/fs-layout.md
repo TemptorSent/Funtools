@@ -1,29 +1,30 @@
-ZFS Dataset Layout
-==================
+# ZFS Dataset Layout
+
 
 ### Pool setup
 
 #### Define a variable with the pool device layout in the form of one of the following:
-	ZVDEVS_rpool="mirror /dev/disk/by-id/... /dev/disk/by-id/..."
-	ZVDEVS_rpool="mirror /dev/disk/by-id/... /dev/disk/by-id/... mirror /dev/disk/by-id/... /dev/disk/by-id/..."
-	ZVDEVS_rpool="raidz1 /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/..."
-	ZVDEVS_rpool="raidz2 /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/..."
-	ZVDEVS_rpool="raidz3 /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/..."
-	ZVDEVS_rpool="raidz1 /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/... raidz1 /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/..."
+##### `ZVDEVS_rpool="mirror /dev/disk/by-id/... /dev/disk/by-id/..."`
+##### `ZVDEVS_rpool="mirror /dev/disk/by-id/... /dev/disk/by-id/... mirror /dev/disk/by-id/... /dev/disk/by-id/..."`
+##### `ZVDEVS_rpool="raidz1 /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/..."`
+##### `ZVDEVS_rpool="raidz2 /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/..."`
+##### `ZVDEVS_rpool="raidz3 /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/..."`
+##### `ZVDEVS_rpool="raidz1 /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/... raidz1 /dev/disk/by-id/... /dev/disk/by-id/... /dev/disk/by-id/..."`
 
+##### ...and so forth. See zpool(8) for further details.
 
 #### Create the pool:
 	zpool create -f -o ashift=12 -o cachefile=/tmp/zpool.cache -O compression=lz4 -O atime=on -O relatime=on -O normalization=formD -O xattr=sa -m none -R /mnt/funtoo rpool ${ZVDEVS_rpool}
 
     
-Note: For SSD pools, consider using `-O atime=off` instead to further reduce number of writes; may confuse progams like mail clients in some cases. 
-Note: See https://github.com/zfsonlinux/zfs/issues/443 for details on xattr=sa.
+##### Note: For SSD pools, consider using `-O atime=off` instead to further reduce number of writes; may confuse progams like mail clients in some cases. 
+##### Note: See https://github.com/zfsonlinux/zfs/issues/443 for details on xattr=sa.
 
 
 ### SWAP Dataset (optional)
 
 #### Create a base dataset to hold swap zvols
-Note: See https://forum.proxmox.com/threads/proxmox-5-change-from-zfs-rpool-swap-to-standard-linux-swap-partition.36376/.
+##### Note: See https://forum.proxmox.com/threads/proxmox-5-change-from-zfs-rpool-swap-to-standard-linux-swap-partition.36376/.
 
 	zfs create -o primarycache=metadata -o secondarycache=metadata -o compression=zle -o sync=always -o logbias=throughput rpool/SWAP
 
