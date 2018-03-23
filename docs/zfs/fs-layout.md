@@ -14,9 +14,9 @@
 ##### ...and so forth. See zpool(8) for further details.
 
 #### Create the pool:
-	zpool create -f -o ashift=12 -o cachefile=/tmp/zpool.cache -O compression=lz4 -O atime=on -O relatime=on -O normalization=formD -O xattr=sa -m none -R /mnt/funtoo rpool ${ZVDEVS_rpool}
+	zpool create -f -o ashift=12 -o cachefile=/tmp/zpool.cache -O compression=lz4 -O atime=on -O relatime=on -O normalization=formD -O xattr=sa -m none -R /mnt/funtoo rpool ${ZVDEVS_rpool:?"Please define ZDEVS_rpool."}
 
-    
+
 ##### Note: For SSD pools, consider using `-O atime=off` instead to further reduce number of writes; may confuse progams like mail clients in some cases. 
 ##### Note: See https://github.com/zfsonlinux/zfs/issues/443 for details on xattr=sa.
 
@@ -66,7 +66,7 @@
 
 #### Create an unmountable dataset at /boot in the boot environment:
 	zfs create -o canmount=off -o sync=always rpool/ROOT/funtoo/boot
-	
+
 #### Create dataset mounted at /boot/active for boot-environment specific boot files:
 	zfs create -o canmount=on rpool/ROOT/funtoo/boot/active
 
@@ -110,3 +110,4 @@
 #### Create mountable datasets for our desired leaf nodes:
 	zfs create -o canmount=on rpool/FUNTOO/var/cache/distfiles
 	zfs create -o canmount=on rpool/FUNTOO/var/git/meta-repo
+
