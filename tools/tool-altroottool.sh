@@ -46,8 +46,9 @@ altroot_init() {
 
 	# Create directory for mountpoint and mount using helper for tagged sources as needed.
 	my_altroot="${1%%/}"
-	my_altrootdir="${my_altroot}/._altroot_"
 	altroot_init_mount "${my_altroot}" "${my_mount}"
+	my_altroot="$(realpath -e "${my_altroot}")" ; [ $? -eq 0 ] || die "Altroot '${my_altroot}' doesn't exits!" ; shift
+	my_altrootdir="${my_altroot}/._altroot_"
 	test -z "${my_tarball}" || altroot_untar "${my_altroot}" "${my_tarball}"
 }
 
@@ -55,11 +56,13 @@ altroot_init() {
 altroot_untar() {
 	local my_altroot my_tarball
 
-	my_altroot="${1%%/}" ; shift
+	my_altroot="$(realpath -e "${1}")" ; [ $? -eq 0 ] || die "Altroot '${1}' doesn't exits!" ; shift
+	my_altrootdir="${my_altroot}/._altroot_"
+
 	my_tarball="${1}" ; shift
 	my_tbname="${my_tarball##*/}"
 
-	grep -qx "${my_tbname}" "${my_altrootdir}/tarballs-extracted" 2>&1 && return 0
+	1>/dev/null 2>&1 grep -qx "${my_tbname}" "${my_altrootdir}/tarballs-extracted" && return 0
 
 	test -e "${my_tarball}" || die "Tarballd '${my_tarball}' doesn't exist!"
 	pushd "${my_altroot}" > /dev/null
@@ -76,16 +79,15 @@ altroot_init_mount() {
 	my_altroot="${1%%/}" ; shift
 	my_mount="${1}" ; shift
 
-	my_altrootdir="${my_altroot}/._altroot_"
-
 	# Create directory for our mountpoint if it doesn't exist.
 	test -d "${my_altroot}" || mkdir -p "${my_altroot}" || die "Could not create '${my_altroot}'!"
-	my_altroot="$(realpath "${my_altroot}")" ; shift
-	
+	my_altroot="$(realpath -e "${my_altroot}")" ; [ $? -eq 0 ] || die "Altroot '${my_altroot}' doesn't exits!" ; shift
+	my_altrootdir="${my_altroot}/._altroot_"
+
 	# If we'r already mounted...
 	if mounttool_is_mounted "${my_altroot}" ; then
 		# See if our altroot is already setup, if so we're done here.
-		grep -qx "/" "${my_altrootdir}/mountpoints_mounted" 2>&1 && return 0
+		1>/dev/null 2>&1 grep -qx "/" "${my_altrootdir}/mountpoints_mounted" && return 0
 
 	# Otherwise, mount something.
 	else
@@ -106,7 +108,8 @@ altroot_mount() {
 	local my_altroot my_args my_src my_type
 
 	# Take first arg as altroot
-	my_altroot="$(realpath "${1}")" ; shift
+	my_altroot="$(realpath -e "${1}")" ; [ $? -eq 0 ] || die "Altroot '${1}' doesn't exits!" ; shift
+	my_altrootdir="${my_altroot}/._altroot_"
 
 	# Consume all but the last arg into my_args & grab some info on the way.
 	while [ $# -gt 1 ] ; do
@@ -120,6 +123,9 @@ altroot_mount() {
 
 	# The final arg is the target mountpoint relative to the altroot
 	my_altmntpnt="${1##/}"
+
+	1>/dev/null 2>&1 grep -qx "/${my_altmntpnt}" "${my_altrootdir}/mountpoints_mounted" && return 0
+	mounttool_is_mounted "${my_altroot}/${my_altmntpnt}" && return 0
 
 	mkdir -p "${my_altroot}/${my_altmntpnt}" || die "Could not create directory for mountpoint '/${my_altmntpnt}' under '${my_altroot}'"
 
@@ -136,7 +142,8 @@ altroot_unmount() {
 	local my_altroot my_args my_src my_type
 
 	# Take first arg as altroot
-	my_altroot="$(realpath "${1}")" ; shift
+	my_altroot="$(realpath -e "${1}")" ; [ $? -eq 0 ] || die "Altroot '${1}' doesn't exits!" ; shift
+	my_altrootdir="${my_altroot}/._altroot_"
 
 	# Consume all but the last arg into my_args.
 	while [ $# -gt 1 ] ; do my_args="${my_args:+${my_args} }${1}" ; shift ; done
@@ -154,8 +161,7 @@ altroot_unmount() {
 # altroot_mount_default <altroot>
 altroot_mount_default() {
 	local my_altroot
-	my_altroot="$(realpath "${1}")" ; shift
-
+	my_altroot="$(realpath -e "${1}")" ; [ $? -eq 0 ] || die "Altroot '${1}' doesn't exits!" ; shift
 	altroot_mount "$my_altroot" -t proc none /proc
 	altroot_mount "$my_altroot" --rbind /sys /sys
 	altroot_mount "$my_altroot" --rbind /dev /dev
@@ -177,6 +183,7 @@ altroot_chroot() {
 
 	# Mount the basics: proc, sys, and dev.
 	altroot_mount_default "${my_altroot}"
+	altroot_copy "${my_altroot}" "/etc/resolv.conf"
 
 	"$_altroot_chroot" "${my_altroot}" $@
 }
@@ -185,7 +192,7 @@ altroot_chroot() {
 # altroot_teardown <altroot>
 altroot_teardown() {
 	local my_altroot
-	my_altroot="$(realpath "${1}")" ; shift
+	my_altroot="$(realpath -e "${1}")" ; [ $? -eq 0 ] || die "Altroot '${1}' doesn't exits!" ; shift
 
 	# Clear the list of mounted mountpoints
 	echo "" > "${my_altrootdir}/mountpoints-mounted"
@@ -195,6 +202,33 @@ altroot_teardown() {
 		umount -l -r "$my_altroot"
 		sleep 1
 	done
+}
+
+
+# altroot_copy <altroot> <source> [target]
+altroot_copy() {
+	local my_altroot my_args my_src my_type
+
+	# Take first arg as altroot.
+	my_altroot="$(realpath -e "${1}")" ; [ $? -eq 0 ] || die "Altroot '${1}' doesn't exits!" ; shift
+
+	# Take second arg as source.
+	my_src="$(realpath -e "${1}")" ; [ $? -eq 0 ] || die "Copy source '${1}' doesn't exits!" ; shift
+
+	# The final arg, if given, is the target relative to the altroot, otherwise use the same path as the source.
+	my_alttgt="${1:-${my_src}}"
+
+	# Clean up path to have a single leading '/' and none trailing.
+	my_alttgt="/${my_alttgt##/}" ; my_alttgt="${my_alttgt%%/}"
+
+	# Copy source to target with full path.
+	my_tgt="${my_altroot}/${my_alttgt##/}"
+	mkdir -p "${my_tgt%/*}"
+	cp -a "${my_src}" "${my_tgt}"
+	
+
+	# Remove the notation that this mountpoint is mounted.
+	printf -- "%s\t%s\n" "${my_src}" "${my_alttgt}" >> "${my_altrootdir}/items-copied"
 }
 
 
