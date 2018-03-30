@@ -12,7 +12,7 @@
 # die [message]
 die() {
 	[ $# -gt 0 ] && printf -- "%s\n" "$*"
-	exit 1
+	exit 1 # This will exit your shell, so source in a subshell for testing!
 }
 
 # Placeholder function for multitool
