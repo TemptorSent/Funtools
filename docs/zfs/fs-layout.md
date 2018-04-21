@@ -20,6 +20,8 @@
 ##### Note: For SSD pools, consider using `-O atime=off` instead to further reduce number of writes; may confuse progams like mail clients in some cases. 
 ##### Note: See https://github.com/zfsonlinux/zfs/issues/443 for details on xattr=sa.
 
+#### Verify that zfs is controlling the scheduling for the device(s) used by zfs:
+	find /sys/block/*/ -name scheduler -print "%p :" -exec cat \{\} \;
 
 ### SWAP Dataset (optional)
 
@@ -38,7 +40,7 @@
 	zfs create -o mountpoint=none -o canmount=off rpool/ROOT
 
 #### Create your initial system boot environment root:
-	zfs create -o mountpoint=/ canmount=on rpool/ROOT/funtoo
+	zfs create -o mountpoint=/ -o canmount=on rpool/ROOT/funtoo
 
 #### Set your system root as the bootfs for the pool
 	zpool set bootfs=rpool/ROOT/funtoo
