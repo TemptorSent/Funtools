@@ -1,11 +1,10 @@
 # ZFS Dataset Layout
 
 ### Disk preparation with wipefs
-#### If giving entire disks to ZFS (recommended), it is a good idea first to use wipefs to remove any disk signatures that may be remaining from previous operating system installations.
-#### "wipefs can erase filesystem, raid or partition-table signatures (magic strings) from the specified device to make the sig‐natures invisible for libblkid.  wipefs does not erase the filesystem itself nor any other data from the device." - wipefs(8)
-### WARNING: The following will make any existing data on the specified drive inaccesable, but will not securely delete it!
+##### If giving entire disks to ZFS (recommended), it is a good idea first to use wipefs to remove any disk signatures that may be remaining from previous operating system installations.
+##### "wipefs can erase filesystem, raid or partition-table signatures (magic strings) from the specified device to make the sig‐natures invisible for libblkid.  wipefs does not erase the filesystem itself nor any other data from the device." - wipefs(8)
+##### WARNING: The following command will make any existing data on the specified drive inaccesable, but will not securely delete it! If you would like to securely erase data, use a secure erase tool, (such as nwipe), not wipefs.
 ##### `wipefs --all /dev/disk/by-id/...`
-#### important: If you would like to securely erase data, use a secure erase tool, (such as nwipe), not wipefs.
 
 ### Pool setup
 
