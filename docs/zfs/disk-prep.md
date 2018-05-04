@@ -6,8 +6,8 @@
 
 #### WARNING: The following commands will make any existing data on the specified drive inaccesable, but will not securely delete it! If you would like to securely erase data, use a secure erase tool, such as nwipe.
 
-##### "Clear out all partition data. This includes GPT header data, all partition definitions, and the protective MBR." -sgdisk(8)
+##### "Clear out all partition data. This includes GPT header data, all partition definitions, and the protective MBR." - sgdisk(8)
 sgdisk --clear /dev/disk/by-id/...
 
-##### "Erase all available signatures." -wipefs(8)
+##### "Erase all available signatures." - wipefs(8)
 wipefs --all /dev/disk/by-id/...
