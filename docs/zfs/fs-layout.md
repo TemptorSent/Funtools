@@ -1,11 +1,5 @@
 # ZFS Dataset Layout
 
-### Disk preparation with wipefs
-##### If giving entire disks to ZFS (recommended), it is a good idea first to use wipefs to remove any disk signatures that may be remaining from previous operating system installations.
-##### "wipefs can erase filesystem, raid or partition-table signatures (magic strings) from the specified device to make the sig‐natures invisible for libblkid.  wipefs does not erase the filesystem itself nor any other data from the device." - wipefs(8)
-##### WARNING: The following command will make any existing data on the specified drive inaccesable, but will not securely delete it! If you would like to securely erase data, use a secure erase tool, (such as nwipe), not wipefs.
-##### `wipefs --all /dev/disk/by-id/...`
-
 ### Pool setup
 
 #### Define a variable with the pool device layout in the form of one of the following:
@@ -19,102 +13,101 @@
 ##### ...and so forth. See zpool(8) for further details.
 
 #### Create the pool:
-	zpool create -f -o ashift=12 -o cachefile=/tmp/zpool.cache -O compression=lz4 -O atime=on -O relatime=on -O normalization=formD -O xattr=sa -m none -R /mnt/funtoo rpool ${ZVDEVS_rpool:?"Please define ZDEVS_rpool."}
+  zpool create -f -o ashift=12 -o cachefile=/tmp/zpool.cache -O compression=lz4 -O atime=on -O relatime=on -O normalization=formD -O xattr=sa -m none -R /mnt/funtoo rpool ${ZVDEVS_rpool:?"Please define ZDEVS_rpool."}
 
 
-##### Note: For SSD pools, consider using `-O atime=off` instead to further reduce number of writes; may confuse progams like mail clients in some cases. 
+##### Note: For SSD pools, consider using `-O atime=off` instead to further reduce number of writes; may confuse progams like mail clients in some cases.
 ##### Note: See https://github.com/zfsonlinux/zfs/issues/443 for details on xattr=sa.
 
 #### Verify that zfs is controlling the scheduling for the device(s) used by zfs:
-	find /sys/block/*/ -name scheduler -print "%p :" -exec cat \{\} \;
+  find /sys/block/*/ -name scheduler -print "%p :" -exec cat \{\} \;
 
 ### SWAP Dataset (optional)
 
 #### Create a base dataset to hold swap zvols
 ##### Note: See https://forum.proxmox.com/threads/proxmox-5-change-from-zfs-rpool-swap-to-standard-linux-swap-partition.36376/.
 
-	zfs create -o primarycache=metadata -o secondarycache=metadata -o compression=zle -o sync=always -o logbias=throughput rpool/SWAP
+  zfs create -o primarycache=metadata -o secondarycache=metadata -o compression=zle -o sync=always -o logbias=throughput rpool/SWAP
 
 #### Create a 4GB zvol to use for swap
-	zfs create -V 4G -b $(getconf PAGESIZE) rpool/SWAP/swap0
+  zfs create -V 4G -b $(getconf PAGESIZE) rpool/SWAP/swap0
 
 
 ### ROOT Dataset
 
 #### Create the base dataset for boot environments:
-	zfs create -o mountpoint=none -o canmount=off rpool/ROOT
+  zfs create -o mountpoint=none -o canmount=off rpool/ROOT
 
 #### Create your initial system boot environment root:
-	zfs create -o mountpoint=/ -o canmount=on rpool/ROOT/funtoo
+  zfs create -o mountpoint=/ -o canmount=on rpool/ROOT/funtoo
 
 #### Set your system root as the bootfs for the pool
-	zpool set bootfs=rpool/ROOT/funtoo
+  zpool set bootfs=rpool/ROOT/funtoo
 
 #### Create your system filesystem hierarchy:
-	zfs create rpool/ROOT/funtoo/var
-	zfs create rpool/ROOT/funtoo/var/git
-	zfs create rpool/ROOT/funtoo/opt
-	zfs create rpool/ROOT/funtoo/srv
+  zfs create rpool/ROOT/funtoo/var
+  zfs create rpool/ROOT/funtoo/var/git
+  zfs create rpool/ROOT/funtoo/opt
+  zfs create rpool/ROOT/funtoo/srv
 
 
 ### BOOT Dataset
 
 #### Create the base dataset for files under /boot:
-	zfs create -o compression=off -o mountpoint=/ -o canmount=off -o sync=always rpool/BOOT
+  zfs create -o compression=off -o mountpoint=/ -o canmount=off -o sync=always rpool/BOOT
 
 #### Create datasets for common /boot:
-	zfs create -o canmount=on rpool/BOOT/boot
+  zfs create -o canmount=on rpool/BOOT/boot
 
 #### Create dataset for grub at /boot/grub:
-	zfs create rpool/BOOT/boot/grub
+  zfs create rpool/BOOT/boot/grub
 
 
 ### ROOT Dataset (After /boot creation)
 
 #### Create an unmountable dataset at /boot in the boot environment:
-	zfs create -o canmount=off -o sync=always rpool/ROOT/funtoo/boot
+  zfs create -o canmount=off -o sync=always rpool/ROOT/funtoo/boot
 
 #### Create dataset mounted at /boot/active for boot-environment specific boot files:
-	zfs create -o canmount=on rpool/ROOT/funtoo/boot/active
+  zfs create -o canmount=on rpool/ROOT/funtoo/boot/active
 
 
 ### TMP Dataset
 
 #### Create a base dataset for temporary directories:
-	zfs create -o mountpoint=/ -o canmount=off rpool/TMP
+  zfs create -o mountpoint=/ -o canmount=off rpool/TMP
 
 #### Create unmnountable datasets rpol/TMP/var for parent directory of /var/tmp:
-	zfs create -o canmount=off rpool/TMP/var
+  zfs create -o canmount=off rpool/TMP/var
 
 #### Create mountable datasets for various temp directories:
-	zfs create -o canmount=on rpool/TMP/tmp
-	zfs create -o canmount=on rpool/TMP/var/tmp
-	zfs create -o canmount=on -o sync=disabled rpool/TMP/var/tmp/portage
+  zfs create -o canmount=on rpool/TMP/tmp
+  zfs create -o canmount=on rpool/TMP/var/tmp
+  zfs create -o canmount=on -o sync=disabled rpool/TMP/var/tmp/portage
 
 
 ### HOME Dataset
 
 #### Create a base dataset for users home directories:
-	zfs create -o mountpoint=/ -o canmount=off rpool/HOME
+  zfs create -o mountpoint=/ -o canmount=off rpool/HOME
 
 #### Create the /home directory root:
-	zfs create -o canmount=on rpool/HOME/home
+  zfs create -o canmount=on rpool/HOME/home
 
 #### Create root's home directory at /root:
-	zfs create -o canmount=on rpool/HOME/root
+  zfs create -o canmount=on rpool/HOME/root
 
 
 ### FUNTOO Dataset
 
 #### Create a base dataset for Funtoo specific stuff:
-	zfs create -o mountpoint=/ -o canmount=off rpool/FUNTOO
+  zfs create -o mountpoint=/ -o canmount=off rpool/FUNTOO
 
 #### Create unmnountable datasets for parent directories of our desired leaf nodes:
-	zfs create -o canmount=off rpool/FUNTOO/var
-	zfs create -o canmount=off rpool/FUNTOO/var/cache
-	zfs create -o canmount=off rpool/FUNTOO/var/git
+  zfs create -o canmount=off rpool/FUNTOO/var
+  zfs create -o canmount=off rpool/FUNTOO/var/cache
+  zfs create -o canmount=off rpool/FUNTOO/var/git
 
 #### Create mountable datasets for our desired leaf nodes:
-	zfs create -o canmount=on rpool/FUNTOO/var/cache/distfiles
-	zfs create -o canmount=on rpool/FUNTOO/var/git/meta-repo
-
+  zfs create -o canmount=on rpool/FUNTOO/var/cache/distfiles
+  zfs create -o canmount=on rpool/FUNTOO/var/git/meta-repo
