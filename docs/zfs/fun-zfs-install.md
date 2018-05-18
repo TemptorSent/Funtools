@@ -36,7 +36,7 @@ Note: Replace 'generic_64' in the URL with your subarch, see https://www.funtoo.
 ### chroot
 
 #### Enter the chroot environment:
-	chroot /mnt/funtoo /bin/bash
+	env -i HOME=/root TERM=$TERM /bin/chroot . bash -l
 
 #### Set a prompt to remind us we're in the chroot:
 	export PS1="(chroot) $PS1"
