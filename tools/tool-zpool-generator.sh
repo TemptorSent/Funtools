@@ -83,7 +83,7 @@ __zpool_create() {
           -O normalization=formD \
           -O xattr=sa \
           -m none \
-          -R /mnt \
+          -R /mnt/funtoo \
           ${POOL_NAME:?"Please define pool name."} \
           ${POOL_TYPE} \
           ${POOL_DISKS:?"Please define pool disks."}
